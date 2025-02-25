@@ -75,44 +75,29 @@ local function get_row_table(stm,names)
 	return res
 end
 
-local function process_result(result)
-	if not result then
-		return true
+
+native.db.exec = function(self,query)
+	local result = {}
+	local res,err = self:exec_impl(query,function(stm)
+		table.insert(result,get_row(stm))
+	end)
+	if not res then
+		return nil,err
 	end
+	res:finalize()
 	return result
 end
 
-
-native.db.exec = function(self,query)
-	local result
-	local res,err = self:exec_impl(query,function(stm)
-		if not result then
-			result = {get_row(stm)}
-		else
-			table.insert(result,get_row(stm))
-		end
-	end)
-	if not res then
-		return nil,err
-	end
-	res:finalize()
-	return process_result(result)
-end
-
 native.db.exec_names = function(self,query,names)
-	local result
+	local result = {}
 	local res,err = self:exec_impl(query,function(stm)
-		if not result then
-			result = {get_row_table(stm,names)}
-		else
-			table.insert(result,get_row_table(stm,names))
-		end
+		table.insert(result,get_row_table(stm,names))
 	end)
 	if not res then
 		return nil,err
 	end
 	res:finalize()
-	return process_result(result)
+	return result
 end
 
 return sqlite
